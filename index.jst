@@ -1,0 +1,51 @@
+STREET_LIGHTS = [2,12,16,19,21,22,26];
+
+var express = require("express");
+var rpio = require("rpio");
+var app = express();
+
+// set rpio to access pins by their GPIOXX number, and set them all to output
+rpio.init({mapping: 'gpio'})
+for(var i = 0; i < STREET_LIGHTS.length;i++){
+	console.log("enable GPIO"+ STREET_LIGHTS[i]);
+	rpio.open(STREET_LIGHTS[i], rpio.OUTPUT, rpio.LOW);
+}
+
+function toggleLights(value){
+	for(var i = 0; i < STREET_LIGHTS.length;i++){
+		console.log("set value ",value, " to pin ", STREET_LIGHTS[i]);
+		rpio.write(STREET_LIGHTS[i],value);
+	}
+}
+
+
+while(true){
+	console.log("blink on");
+	toggleLights(rpio.HIGH);
+	rpio.sleep(1);
+	console.log("blink off");
+	toggleLights(rpio.LOW);
+	rpio.sleep(1);
+}
+
+// API to toggle lights
+app.get("/lights/:value", function(req, res){
+	var value = req.params.value;
+
+	if(value == 'on'){
+		console.log("Toggle Lights ON");
+		toggleLights(rpio.HIGH)
+		res.send("Lights have been turned on!");
+	} else if(value == 'off') {
+		console.log("Toggle Lights OFF");
+		toggleLights(rpio.LOW)
+		res.send("Lights have been turned OFF!");
+	} else {
+		console.log("unknown command ", value);
+		res.send("Unknown command!\nDon't know how to turn lights " + value);
+	}
+});
+
+console.log("listening on port 3000")
+// app.listen(3000);
+
